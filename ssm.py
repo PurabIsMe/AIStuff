@@ -9,16 +9,20 @@ class SSM(nn.Module):
         self.B = nn.Linear(sequence_size, hidden_size, dtype= dtype)
         self.C = nn.Linear(hidden_size, output_size, dtype= dtype)
         self.D = nn.Linear(sequence_size, output_size, dtype= dtype)
-        #self.H = torch.zeros(hidden_size, dtype=dtype)
-        self.register_buffer('H', torch.randn(hidden_size, dtype=dtype))
+        self.H = torch.randn(hidden_size, dtype=dtype)
+        self.hidden_size = hidden_size
+        self.sequence_size = sequence_size
+        self.output_size = output_size
+        #self.register_buffer('H', None)
     
     def reset_hidden(self):
-        with torch.no_grad():
-            self.H = torch.zeros_like(self.H)
+        #self.H = torch.zeros(batch_size, self.hidden_size, dtype=self.A.weight.dtype, device=self.A.weight.device)
+        self.H = torch.zeros(self.hidden_size, dtype = self.A.weight.dtype)
 
     def forward(self, x):
         self.H.detach_()
-        self.H = torch.sigmoid(self.A(x)) * self.H + torch.sigmoid(self.B(x)) 
-        y = (self.C(torch.sigmoid(self.H))) + self.D(x)
+        b = self.B(x)
+        self.H = torch.tanh(self.A(x)) * self.H + torch.sigmoid(b) * b 
+        y = (self.C(torch.tanh(self.H))) + self.D(x)
         
         return y
